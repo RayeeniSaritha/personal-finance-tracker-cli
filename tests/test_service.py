@@ -101,6 +101,26 @@ class TestFinanceTrackerService(unittest.TestCase):
                 timestamp="invalid-date-string",
             )
 
+    def test_timezone_aware_and_naive_datetimes(self) -> None:
+        tx1, _ = self.service.add_transaction(
+            type_=TransactionType.INCOME,
+            category="Salary",
+            amount="1000.00",
+            payment_method=PaymentMethod.BANK_TRANSFER,
+            timestamp="2026-09-08T18:00:00Z",
+        )
+        tx2, _ = self.service.add_transaction(
+            type_=TransactionType.EXPENSE,
+            category="Food",
+            amount="50.00",
+            payment_method=PaymentMethod.CASH,
+            timestamp="2026-09-08T19:00:00",
+        )
+        txs = self.service.list_transactions()
+        self.assertEqual(len(txs), 2)
+        self.assertEqual(txs[0].transaction_id, tx1.transaction_id)
+        self.assertEqual(txs[1].transaction_id, tx2.transaction_id)
+
     def test_invalid_category_raises_validation_error(self) -> None:
         with self.assertRaises(ValidationError):
             self.service.add_transaction(

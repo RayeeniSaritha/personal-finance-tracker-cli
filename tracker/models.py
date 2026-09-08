@@ -106,29 +106,38 @@ def quantize_amount(val: Any) -> Decimal:
 
 
 def parse_datetime(val: Union[str, datetime]) -> datetime:
-    """Validates and parses ISO 8601 datetime strings or returns datetime instance."""
+    """Validates and parses ISO 8601 datetime strings or returns datetime instance. Standardizes to naive datetime."""
+    dt = None
     if isinstance(val, datetime):
-        return val
-    if not isinstance(val, str) or not val.strip():
+        dt = val
+    elif not isinstance(val, str) or not val.strip():
         raise ValidationError(
             "Timestamp must be a non-empty ISO 8601 string or datetime object."
         )
+    else:
+        val_str = val.strip()
+        if val_str.endswith("Z"):
+            val_str = val_str[:-1] + "+00:00"
 
-    val_str = val.strip()
-    try:
-        return datetime.fromisoformat(val_str)
-    except ValueError:
-        pass
-
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
         try:
-            return datetime.strptime(val_str, fmt)
+            dt = datetime.fromisoformat(val_str)
         except ValueError:
-            continue
+            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+                try:
+                    dt = datetime.strptime(val_str, fmt)
+                    break
+                except ValueError:
+                    continue
 
-    raise ValidationError(
-        f"Invalid datetime format '{val}'. Expected ISO 8601 (YYYY-MM-DDTHH:MM:SS or YYYY-MM-DD)."
-    )
+        if dt is None:
+            raise ValidationError(
+                f"Invalid datetime format '{val}'. Expected ISO 8601 (YYYY-MM-DDTHH:MM:SS or YYYY-MM-DD)."
+            )
+
+    if dt.tzinfo is not None:
+        dt = dt.replace(tzinfo=None)
+
+    return dt
 
 
 def validate_month_format(month_str: str) -> str:
