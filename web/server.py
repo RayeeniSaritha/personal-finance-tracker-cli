@@ -262,7 +262,7 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                         "is_warning": alert.is_warning,
                     }
 
-                self._send_json({"transaction": tx.to_dict(), "alert": alert_dict}, status=210)
+                self._send_json({"transaction": tx.to_dict(), "alert": alert_dict}, status=201)
 
             elif path == "/api/budgets":
                 category = payload.get("category")
