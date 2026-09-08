@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Enterprise Personal Finance Tracker - Client-Ready Web Application">
   <title>Personal Finance Tracker Dashboard</title>
-  <link rel="stylesheet" href="/static/css/style.css?v=1.0.1">
+  <link rel="stylesheet" href="/static/css/style.css?v=1.0.2">
 </head>
 <body>
 
@@ -243,23 +243,31 @@
 
   <!-- Import Bank Statement Modal -->
   <div id="importModal" class="modal-backdrop">
-    <div class="modal-card" style="max-width: 620px;">
+    <div class="modal-card" style="max-width: 680px;">
       <div class="modal-header">
         <h3 class="modal-title">📥 Import Bank Statement</h3>
         <button id="closeImportBtn" class="modal-close">&times;</button>
       </div>
       <form id="importForm" class="form-grid">
         <p style="font-size: 0.85rem; color: var(--text-secondary);">
-          Upload your bank statement CSV file or paste statement text. Categories will be auto-classified and duplicate transactions automatically skipped.
+          Choose your statement document type. Supports CSV spreadsheets, PDF bank statements, image/receipt screenshots, or raw text.
         </p>
 
-        <div class="form-group">
-          <label for="importFile">Choose Statement CSV File</label>
-          <input type="file" id="importFile" class="input-field" accept=".csv,.txt">
+        <!-- Import Format Selector Tabs -->
+        <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary import-tab active" data-tab="csv">📊 CSV / TXT</button>
+          <button type="button" class="btn btn-secondary import-tab" data-tab="pdf">📄 PDF Document</button>
+          <button type="button" class="btn btn-secondary import-tab" data-tab="image">🖼️ Image / Screenshot</button>
+          <button type="button" class="btn btn-secondary import-tab" data-tab="text">📝 Paste Text</button>
         </div>
 
-        <div class="form-group">
-          <label for="importText">Or Paste Statement CSV Text</label>
+        <div class="form-group" id="fileGroup">
+          <label for="importFile" id="importFileLabel">Choose CSV File (.csv, .txt)</label>
+          <input type="file" id="importFile" class="input-field" accept=".csv,.txt,.pdf,image/*">
+        </div>
+
+        <div class="form-group" id="textGroup">
+          <label for="importText" id="importTextLabel">Statement Content / Extracted Text</label>
           <textarea id="importText" class="input-field" rows="6" placeholder="Date,Description,Amount&#10;2026-09-01,Salary Employer,3500.00&#10;2026-09-02,Supermarket Groceries,-125.50&#10;2026-09-03,Uber Transit,-24.00" style="resize: vertical; font-family: monospace; font-size: 0.82rem;"></textarea>
         </div>
 
@@ -274,6 +282,6 @@
     </div>
   </div>
 
-  <script src="/static/js/app.js?v=1.0.1"></script>
+  <script src="/static/js/app.js?v=1.0.2"></script>
 </body>
 </html>

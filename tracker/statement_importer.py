@@ -9,9 +9,53 @@ from decimal import Decimal
 import io
 import re
 from typing import Dict, List, Optional, Tuple
+import zlib
 
 from tracker.exceptions import ValidationError
 from tracker.models import PaymentMethod, Transaction, TransactionType, parse_datetime, quantize_amount
+
+
+class PDFTextExtractor:
+    """Extracts text content from PDF document streams using Python standard library zlib."""
+
+    @classmethod
+    def extract_text_from_bytes(cls, pdf_bytes: bytes) -> str:
+        """Parses stream objects from unencrypted PDF bytes and extracts text elements."""
+        extracted: List[str] = []
+        stream_pattern = re.compile(b"stream[\r\n]+(.*?)[\r\n]+endstream", re.DOTALL)
+
+        for match in stream_pattern.finditer(pdf_bytes):
+            stream_data = match.group(1)
+            decompressed = None
+            try:
+                decompressed = zlib.decompress(stream_data)
+            except Exception:
+                decompressed = stream_data
+
+            if not decompressed:
+                continue
+
+            tj_pattern = re.compile(b"\\((.*?)\\)\\s*Tj|\\[(.*?)\\]\\s*TJ", re.DOTALL)
+            for tj_match in tj_pattern.finditer(decompressed):
+                str1 = tj_match.group(1)
+                str2 = tj_match.group(2)
+                if str1:
+                    clean = str1.decode("latin1", errors="ignore").strip()
+                    if clean:
+                        extracted.append(clean)
+                elif str2:
+                    sub_matches = re.findall(b"\\((.*?)\\)", str2)
+                    line_parts = [s.decode("latin1", errors="ignore").strip() for s in sub_matches if s.strip()]
+                    if line_parts:
+                        extracted.append(" ".join(line_parts))
+
+        if not extracted:
+            latin_str = pdf_bytes.decode("latin1", errors="ignore")
+            matches = re.findall(r"\(([^()]{3,100})\)\s*Tj", latin_str)
+            if matches:
+                return "\n".join(matches)
+
+        return "\n".join(extracted)
 
 
 @dataclass
@@ -76,6 +120,20 @@ class BankStatementImporter:
         """
         if not content or not content.strip():
             raise ValidationError("Bank statement content is empty.")
+
+        # Check if content is a PDF document stream or Base64 data URI
+        if content.startswith("%PDF-") or "data:application/pdf;base64," in content or content.startswith("JVBERi0"):
+            import base64
+            try:
+                if "base64," in content:
+                    raw_bytes = base64.b64decode(content.split("base64,")[1])
+                elif content.startswith("JVBERi0"):
+                    raw_bytes = base64.b64decode(content.strip())
+                else:
+                    raw_bytes = content.encode("latin1")
+                content = PDFTextExtractor.extract_text_from_bytes(raw_bytes)
+            except Exception as e:
+                raise ValidationError(f"Failed to extract text from PDF document: {e}") from e
 
         # Build existing lookup hash for deduplication: (timestamp.strftime('%Y-%m-%d'), amount, description.lower())
         existing_hashes = {

@@ -107,6 +107,33 @@ function setupEventListeners() {
   const loadSampleBtn = document.getElementById('loadSampleBtn');
   if (loadSampleBtn) loadSampleBtn.addEventListener('click', handleLoadSampleStatement);
 
+  // Import Format Selector Tabs
+  const importTabs = document.querySelectorAll('.import-tab');
+  importTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      importTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const targetTab = tab.getAttribute('data-tab');
+      const fileLabel = document.getElementById('importFileLabel');
+      const fileInput = document.getElementById('importFile');
+
+      if (!fileLabel || !fileInput) return;
+
+      if (targetTab === 'csv') {
+        fileLabel.textContent = 'Choose CSV File (.csv, .txt)';
+        fileInput.accept = '.csv,.txt';
+      } else if (targetTab === 'pdf') {
+        fileLabel.textContent = 'Choose PDF Bank Statement (.pdf)';
+        fileInput.accept = '.pdf';
+      } else if (targetTab === 'image') {
+        fileLabel.textContent = 'Choose Image / Screenshot (.png, .jpg, .jpeg, .webp)';
+        fileInput.accept = 'image/*';
+      } else if (targetTab === 'text') {
+        fileLabel.textContent = 'Paste Raw Statement Text Below';
+      }
+    });
+  });
+
   // Transaction Form Submit
   const txForm = document.getElementById('txForm');
   if (txForm) txForm.addEventListener('submit', handleAddTransaction);
@@ -502,11 +529,20 @@ async function handleImportStatement(e) {
 
   if (fileInput && fileInput.files.length > 0) {
     const file = fileInput.files[0];
-    content = await file.text();
+    if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+      content = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    } else {
+      content = await file.text();
+    }
   }
 
   if (!content) {
-    showToast('Please select a statement CSV file or paste statement text.', 'error');
+    showToast('Please select a statement document file or paste text.', 'error');
     return;
   }
 
@@ -516,7 +552,7 @@ async function handleImportStatement(e) {
       body: JSON.stringify({ content }),
     });
 
-    showToast(`Imported ${res.imported_count} transaction(s)! (Skipped ${res.skipped_duplicates} duplicates)`);
+    showToast(`Successfully imported ${res.imported_count} transaction(s)! (Skipped ${res.skipped_duplicates} duplicates)`);
     closeModal('importModal');
     document.getElementById('importForm').reset();
     refreshAll();
