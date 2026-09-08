@@ -278,6 +278,19 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                 added = self.service.add_custom_category(category_name, tx_type)
                 self._send_json({"category": added}, status=200)
 
+            elif path == "/api/import-statement":
+                content = payload.get("content", "")
+                result = self.service.import_bank_statement(content)
+                self._send_json(
+                    {
+                        "imported_count": result.imported_count,
+                        "skipped_duplicates": result.skipped_duplicates,
+                        "total_income": f"{result.total_income:.2f}",
+                        "total_expense": f"{result.total_expense:.2f}",
+                    },
+                    status=200,
+                )
+
             else:
                 self._send_error(f"Endpoint '{path}' not found.", status=404)
 
@@ -291,10 +304,11 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
         path = parsed.path
 
         if path.startswith("/api/transactions/"):
-            tx_id = path[len("/api/transactions/") :]
+            raw_id = path[len("/api/transactions/") :]
+            tx_id = urllib.parse.unquote(raw_id).strip()
             try:
                 result = self.service.delete_transaction(tx_id)
-                self._send_json({"success": result, "deleted_id": tx_id})
+                self._send_json({"success": result, "deleted_id": tx_id}, status=200)
             except FinanceTrackerError as e:
                 self._send_error(e.message, status=404)
             except Exception as e:

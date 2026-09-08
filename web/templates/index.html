@@ -24,6 +24,7 @@
           <label for="selectedMonth">Period:</label>
           <input type="month" id="selectedMonth">
         </div>
+        <button id="openImportBtn" class="btn btn-secondary">📥 Import Statement</button>
         <button id="openExportBtn" class="btn btn-secondary">📄 Export Report</button>
         <button id="openAddTxBtn" class="btn btn-primary">➕ Add Transaction</button>
       </div>
@@ -236,6 +237,39 @@
           <button class="btn btn-secondary" onclick="closeModal('exportModal')">Close</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Import Bank Statement Modal -->
+  <div id="importModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📥 Import Bank Statement</h3>
+        <button id="closeImportBtn" class="modal-close">&times;</button>
+      </div>
+      <form id="importForm" class="form-grid">
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          Upload your bank statement CSV file or paste statement text. Categories will be auto-classified and duplicate transactions automatically skipped.
+        </p>
+
+        <div class="form-group">
+          <label for="importFile">Choose Statement CSV File</label>
+          <input type="file" id="importFile" class="input-field" accept=".csv,.txt">
+        </div>
+
+        <div class="form-group">
+          <label for="importText">Or Paste Statement CSV Text</label>
+          <textarea id="importText" class="input-field" rows="6" placeholder="Date,Description,Amount&#10;2026-09-01,Salary Employer,3500.00&#10;2026-09-02,Supermarket Groceries,-125.50&#10;2026-09-03,Uber Transit,-24.00" style="resize: vertical; font-family: monospace; font-size: 0.82rem;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+          <button type="button" class="btn btn-secondary" id="loadSampleBtn" style="font-size: 0.8rem;">Load Sample Statement</button>
+          <div style="display: flex; gap: 12px;">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('importModal')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Process Import</button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 

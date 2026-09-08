@@ -94,6 +94,19 @@ function setupEventListeners() {
   const closeExportBtn = document.getElementById('closeExportBtn');
   if (closeExportBtn) closeExportBtn.addEventListener('click', () => closeModal('exportModal'));
 
+  // Import Modal Toggle
+  const openImportBtn = document.getElementById('openImportBtn');
+  if (openImportBtn) openImportBtn.addEventListener('click', () => openModal('importModal'));
+
+  const closeImportBtn = document.getElementById('closeImportBtn');
+  if (closeImportBtn) closeImportBtn.addEventListener('click', () => closeModal('importModal'));
+
+  const importForm = document.getElementById('importForm');
+  if (importForm) importForm.addEventListener('submit', handleImportStatement);
+
+  const loadSampleBtn = document.getElementById('loadSampleBtn');
+  if (loadSampleBtn) loadSampleBtn.addEventListener('click', handleLoadSampleStatement);
+
   // Transaction Form Submit
   const txForm = document.getElementById('txForm');
   if (txForm) txForm.addEventListener('submit', handleAddTransaction);
@@ -447,6 +460,7 @@ async function handleDeleteTx(id) {
     // Handled
   }
 }
+window.handleDeleteTx = handleDeleteTx;
 
 async function handleOpenExport() {
   try {
@@ -456,5 +470,51 @@ async function handleOpenExport() {
     openModal('exportModal');
   } catch (err) {
     // Handled
+  }
+}
+
+async function handleImportStatement(e) {
+  e.preventDefault();
+  const fileInput = document.getElementById('importFile');
+  const textInput = document.getElementById('importText');
+  let content = textInput ? textInput.value.trim() : '';
+
+  if (fileInput && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    content = await file.text();
+  }
+
+  if (!content) {
+    showToast('Please select a statement CSV file or paste statement text.', 'error');
+    return;
+  }
+
+  try {
+    const res = await apiCall('/api/import-statement', {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+
+    showToast(`Imported ${res.imported_count} transaction(s)! (Skipped ${res.skipped_duplicates} duplicates)`);
+    closeModal('importModal');
+    document.getElementById('importForm').reset();
+    refreshAll();
+  } catch (err) {
+    // Handled by apiCall
+  }
+}
+
+function handleLoadSampleStatement() {
+  const textInput = document.getElementById('importText');
+  if (textInput) {
+    const today = state.currentMonth;
+    textInput.value = `Date,Description,Amount,Type
+${today}-01,Monthly Salary Employer,4200.00,INCOME
+${today}-02,Walmart Supermarket Groceries,-145.80,EXPENSE
+${today}-03,Uber Transit Ride,-28.50,EXPENSE
+${today}-04,Electric Power Utility,-85.20,EXPENSE
+${today}-05,Freelance Web Development Payout,850.00,INCOME
+${today}-06,Netflix Subscription,-17.99,EXPENSE
+${today}-07,Amazon Online Shopping,-64.30,EXPENSE`;
   }
 }

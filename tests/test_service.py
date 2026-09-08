@@ -276,6 +276,40 @@ class TestFinanceTrackerService(unittest.TestCase):
         self.assertEqual(len(budgets), 1)
         self.assertEqual(budgets[0].limit_amount, Decimal("500.00"))
 
+    def test_import_bank_statement_csv(self) -> None:
+        csv_content = """Date,Description,Amount
+2026-09-01,Employer Salary Payroll,3500.00
+2026-09-02,Walmart Supermarket Groceries,-120.50
+2026-09-03,Uber Ride Transit,-25.00"""
+
+        result = self.service.import_bank_statement(csv_content)
+        self.assertEqual(result.imported_count, 3)
+        self.assertEqual(result.skipped_duplicates, 0)
+        self.assertEqual(result.total_income, Decimal("3500.00"))
+        self.assertEqual(result.total_expense, Decimal("145.50"))
+
+        txs = self.service.list_transactions()
+        self.assertEqual(len(txs), 3)
+
+        # Check auto-categorization
+        cats = {t.description: t.category for t in txs}
+        self.assertEqual(cats["Employer Salary Payroll"], "Salary")
+        self.assertEqual(cats["Walmart Supermarket Groceries"], "Food")
+        self.assertEqual(cats["Uber Ride Transit"], "Transportation")
+
+    def test_import_bank_statement_deduplication(self) -> None:
+        csv_content = """Date,Description,Amount
+2026-09-01,Employer Salary Payroll,3500.00
+2026-09-02,Walmart Supermarket Groceries,-120.50"""
+
+        res1 = self.service.import_bank_statement(csv_content)
+        self.assertEqual(res1.imported_count, 2)
+
+        # Import identical statement again -> all duplicates skipped
+        res2 = self.service.import_bank_statement(csv_content)
+        self.assertEqual(res2.imported_count, 0)
+        self.assertEqual(res2.skipped_duplicates, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

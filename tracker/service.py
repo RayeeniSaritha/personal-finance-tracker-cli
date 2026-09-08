@@ -23,6 +23,7 @@ from tracker.models import (
     quantize_amount,
     validate_month_format,
 )
+from tracker.statement_importer import BankStatementImporter, ImportResult
 from tracker.storage import CSVStorageManager
 import tracker.views as views
 
@@ -351,3 +352,14 @@ class FinanceTrackerService:
         temp_file.replace(file_path)
 
         return file_path
+
+    def import_bank_statement(self, statement_content: str) -> ImportResult:
+        """Parses and imports bank statement CSV/text content into persistent storage."""
+        existing_txs = self.storage.load_transactions()
+        result = BankStatementImporter.parse_statement_content(statement_content, existing_txs)
+
+        if result.transactions:
+            updated_list = existing_txs + result.transactions
+            self.storage.save_transactions(updated_list)
+
+        return result
