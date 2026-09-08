@@ -1,10 +1,10 @@
-# Personal Finance Tracker CLI Application
+# Personal Finance Tracker Pro (CLI & Web Application)
 
-An enterprise-structured, production-ready Personal Finance Tracker CLI application built entirely with the **Python Standard Library** (zero external package dependencies). Designed for high financial data precision, atomic storage integrity, category budget enforcement, and comprehensive financial analytics.
+An enterprise-structured, client-ready Personal Finance Tracker application built entirely with the **Python Standard Library** (zero external package dependencies). Supports both an interactive **CLI Interface** and a modern **Web Dashboard** with dark-mode glassmorphism design, real-time metrics, SVG spending charts, budget cap enforcement, and report exporting.
 
 ---
 
-## 🏛️ System Architecture
+## 🏛️ Project Architecture
 
 ```
 finance_tracker/
@@ -16,44 +16,52 @@ finance_tracker/
 │   ├── budget.py           # Monthly category budget registry & alert evaluations
 │   ├── service.py          # Core business logic: CRUD, filters, net balance & report exporter
 │   └── views.py            # Custom ASCII table views, alert banners, and statement formatters
+├── web/
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css   # Dark-mode glassmorphism design system & animations
+│   │   └── js/
+│   │       └── app.js      # Client SPA engine, REST API client, and SVG charts
+│   ├── templates/
+│   │   └── index.html      # Responsive HTML5 Web Dashboard
+│   └── server.py           # Zero-dependency Python HTTP Server & REST API endpoints
 ├── tests/
 │   ├── __init__.py         # Unit test package initialization
 │   └── test_service.py     # Unittest suite for transactions, Decimal math, and budget alerts
-├── main.py                 # Application entry point, interactive loop, and SIGINT shield
-└── README.md               # Architecture documentation and quickstart guide
+├── app.py                  # Web application launcher (`python app.py`)
+├── main.py                 # Application entry point (CLI & Web server)
+├── README.md               # Architecture documentation and quickstart guide
+└── .gitignore
 ```
 
 ---
 
-## 💡 Key Architectural Highlights
+## 💡 Key Highlights
 
-1. **Zero External Dependencies**: Implemented using pure Python standard library modules (`decimal`, `pathlib`, `csv`, `datetime`, `dataclasses`, `enum`, `unittest`, `typing`, `logging`, `signal`).
-2. **Strict Financial Precision (`decimal.Decimal`)**: Floating-point representation errors are completely eliminated by enforcing `decimal.Decimal` with explicit 2-decimal place quantization (`ROUND_HALF_UP`) across all monetary calculations.
-3. **Atomic File Storage & Data Integrity**: Prevents corrupted or partial CSV writes by streaming data to temporary `.tmp` files first, followed by atomic filesystem replacement (`Path.replace`).
-4. **Monthly Budget Cap Enforcement & Alerts**: Monitors category spending against user-defined monthly limits. Triggers a `WARNING` banner at 90% threshold and an `EXCEEDED` alert when spending breaks the limit.
-5. **Robust CLI UX & Signal Protection**: Includes graceful Ctrl+C (`SIGINT`) shutdown handling, dynamic ASCII tables, non-crashing input validation, and statement exports (Markdown / Plain Text).
+1. **Zero External Dependencies**: Standard library Python 3.9+ (`decimal`, `pathlib`, `csv`, `datetime`, `dataclasses`, `http.server`, `json`, `signal`).
+2. **Modern Glassmorphism Web Dashboard**: Features executive metric cards, SVG spending distribution donut charts, budget cap progress bars, real-time alert notifications, search & multi-filter transaction logs, and modal forms.
+3. **Decimal Monetary Precision (`decimal.Decimal`)**: Guarantees exact currency calculations rounded to 2 decimal places with `ROUND_HALF_UP` quantization.
+4. **Atomic Data Persistence**: Temporary file write-and-replace strategy prevents CSV file corruption during unexpected interruptions.
+5. **Dual Interface**: Run as an interactive command-line app OR launch the Web Dashboard server.
 
 ---
 
 ## 🚀 Quickstart & Usage
 
-### 1. Launch Interactive CLI Application
-Navigate to the root directory and run `main.py`:
+### 1. Run the Web Application
+Launch the web server with `python app.py` (or `python main.py web`):
 
+```bash
+cd finance_tracker
+python app.py
+```
+Open your browser and navigate to: **`http://127.0.0.1:8000/`**
+
+### 2. Run the Interactive CLI Application
 ```bash
 cd finance_tracker
 python main.py
 ```
-
-### 2. Interactive Features Overview
-- **Option 1 & 2**: Record Income and Expense transactions (Income/Expense, Category, Amount, Payment Method, Description, Timestamp).
-- **Option 3**: View transaction history with optional date range, type, or category filters.
-- **Option 4**: Display Financial Summary (Total Income, Total Expense, Net Cash Flow, and Category Breakdown with percentage distribution).
-- **Option 5**: Set category budget limits and review monthly budget spending status.
-- **Option 6**: Register client-defined custom income/expense categories.
-- **Option 7**: Delete transactions safely by ID or ID prefix.
-- **Option 8**: Export Monthly Statements to clean Markdown (`data/exports/statement_YYYY-MM.md`) or Plain Text (`.txt`).
-- **Option 9**: Graceful Exit.
 
 ---
 
@@ -68,9 +76,14 @@ python -m unittest discover tests
 
 ---
 
-## 📄 Storage Schema
+## 🛰️ REST API Endpoints
 
-Data is stored locally under `data/`:
-- **`data/transactions.csv`**: `transaction_id,timestamp,type,category,amount,payment_method,description`
-- **`data/budgets.csv`**: `category,month,limit_amount`
-- **`data/exports/`**: Exported Markdown and Plain Text monthly financial statements.
+The built-in Python HTTP server exposes JSON REST endpoints:
+
+- `GET /api/summary?month=YYYY-MM`: Executive metrics & category expense breakdown.
+- `GET /api/transactions?month=YYYY-MM`: Filtered transaction logs.
+- `POST /api/transactions`: Record income or expense transactions.
+- `DELETE /api/transactions/<id>`: Delete transaction by ID.
+- `GET /api/budgets?month=YYYY-MM`: Budget status, spending progress, and active alerts.
+- `POST /api/budgets`: Configure category monthly budget caps.
+- `GET /api/export?month=YYYY-MM&format=markdown`: Generate monthly statement file download.

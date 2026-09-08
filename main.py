@@ -280,4 +280,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1].lower() in ("web", "server"):
+        port = int(sys.argv[2]) if len(sys.argv) > 2 and sys.argv[2].isdigit() else 8000
+        from web.server import run_web_server
+        run_web_server(port=port)
+    else:
+        main()

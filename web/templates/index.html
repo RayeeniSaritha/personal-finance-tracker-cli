@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Enterprise Personal Finance Tracker - Client-Ready Web Application">
+  <title>Personal Finance Tracker Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon">💎</div>
+        <div class="brand-text">
+          <h1>FinanceTracker Pro</h1>
+          <p>Enterprise Personal Wealth Dashboard</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="month-selector">
+          <label for="selectedMonth">Period:</label>
+          <input type="month" id="selectedMonth">
+        </div>
+        <button id="openExportBtn" class="btn btn-secondary">📄 Export Report</button>
+        <button id="openAddTxBtn" class="btn btn-primary">➕ Add Transaction</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- Alert Notifications Banner Container -->
+    <div id="alertsBanner" class="alerts-container"></div>
+
+    <!-- Executive Metrics Grid -->
+    <section class="metrics-grid">
+      <div class="metric-card income">
+        <div class="metric-header">
+          <span class="metric-title">Total Incomes</span>
+          <div class="metric-badge">↓</div>
+        </div>
+        <div id="metricIncome" class="metric-amount">$0.00</div>
+        <div class="metric-sub">Recorded monthly revenue</div>
+      </div>
+
+      <div class="metric-card expense">
+        <div class="metric-header">
+          <span class="metric-title">Total Expenses</span>
+          <div class="metric-badge">↑</div>
+        </div>
+        <div id="metricExpense" class="metric-amount">$0.00</div>
+        <div class="metric-sub">Recorded monthly expenditure</div>
+      </div>
+
+      <div class="metric-card cashflow">
+        <div class="metric-header">
+          <span class="metric-title">Net Cash Flow</span>
+          <div class="metric-badge">⚖️</div>
+        </div>
+        <div id="metricNet" class="metric-amount">$0.00</div>
+        <div class="metric-sub">Net financial delta</div>
+      </div>
+    </section>
+
+    <!-- Two Column Dashboard Layout -->
+    <div class="content-grid">
+
+      <!-- Left Column: Transactions Log -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">📋 Transaction Log</h2>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="controls-bar">
+          <input type="text" id="filterSearch" class="input-field" placeholder="Search description or category..." style="flex: 1;">
+          
+          <select id="filterType" class="select-field">
+            <option value="ALL">All Directions</option>
+            <option value="INCOME">Incomes</option>
+            <option value="EXPENSE">Expenses</option>
+          </select>
+
+          <select id="filterCategory" class="select-field">
+            <option value="ALL">All Categories</option>
+          </select>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="txTableBody">
+              <!-- Dynamically rendered -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right Column: Analytics & Budgets -->
+      <div style="display: flex; flex-direction: column; gap: 28px;">
+        
+        <!-- Category Distribution Card -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">📊 Spending Distribution</h2>
+          </div>
+          <div class="chart-container">
+            <svg id="donutChart" width="200" height="200" viewBox="0 0 200 200"></svg>
+          </div>
+          <div id="categoryBreakdown" class="progress-list" style="margin-top: 16px;">
+            <!-- Dynamically rendered -->
+          </div>
+        </section>
+
+        <!-- Budget Caps Card -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">🎯 Category Budget Caps</h2>
+            <button id="openBudgetBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">⚙️ Set Cap</button>
+          </div>
+          <div id="budgetsList" class="progress-list">
+            <!-- Dynamically rendered -->
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Add Transaction Modal -->
+  <div id="txModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Transaction</h3>
+        <button id="closeTxBtn" class="modal-close">&times;</button>
+      </div>
+      <form id="txForm" class="form-grid">
+        <div class="form-group">
+          <label for="txType">Transaction Type</label>
+          <select id="txType" class="select-field" required>
+            <option value="EXPENSE">EXPENSE</option>
+            <option value="INCOME">INCOME</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="txCategory">Category</label>
+          <select id="txCategory" class="select-field" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="txAmount">Amount ($)</label>
+          <input type="number" id="txAmount" class="input-field" step="0.01" min="0.01" placeholder="0.00" required>
+        </div>
+
+        <div class="form-group">
+          <label for="txPaymentMethod">Payment Method</label>
+          <select id="txPaymentMethod" class="select-field" required>
+            <option value="Debit Card">Debit Card</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Cash">Cash</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="txDate">Timestamp</label>
+          <input type="datetime-local" id="txDate" class="input-field">
+        </div>
+
+        <div class="form-group">
+          <label for="txDescription">Description</label>
+          <input type="text" id="txDescription" class="input-field" placeholder="Notes or memo (optional)">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('txModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Set Budget Modal -->
+  <div id="budgetModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Configure Monthly Budget Cap</h3>
+        <button id="closeBudgetBtn" class="modal-close">&times;</button>
+      </div>
+      <form id="budgetForm" class="form-grid">
+        <div class="form-group">
+          <label for="budgetCategory">Expense Category</label>
+          <select id="budgetCategory" class="select-field" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="budgetAmount">Monthly Cap Limit ($)</label>
+          <input type="number" id="budgetAmount" class="input-field" step="0.01" min="0.01" placeholder="500.00" required>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('budgetModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Set Budget Limit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Export Report Modal -->
+  <div id="exportModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Monthly Financial Statement Export</h3>
+        <button id="closeExportBtn" class="modal-close">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">Statement preview in Markdown format:</p>
+        <div id="exportPreview" class="code-preview"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button class="btn btn-secondary" onclick="closeModal('exportModal')">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
