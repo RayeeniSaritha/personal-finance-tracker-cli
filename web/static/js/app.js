@@ -145,13 +145,17 @@ function setupEventListeners() {
     const target = e.target.closest('.btn-delete-tx');
     if (target) {
       const id = target.getAttribute('data-id');
-      if (id && confirm('Are you sure you want to delete this transaction?')) {
+      if (id) {
+        target.disabled = true;
+        target.textContent = 'Deleting...';
         try {
           await apiCall(`/api/transactions/${id}`, { method: 'DELETE' });
           showToast('Transaction deleted successfully!');
           await refreshAll();
         } catch (err) {
           showToast(err.message, 'error');
+          target.disabled = false;
+          target.textContent = 'Delete';
         }
       }
     }
@@ -341,7 +345,7 @@ function renderTransactionsTable() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">
+        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
           No transactions found for the selected filters.
         </td>
       </tr>
@@ -357,9 +361,9 @@ function renderTransactionsTable() {
       <td><strong>${t.category}</strong></td>
       <td class="amount-text ${t.type.toLowerCase()}">${t.type === 'INCOME' ? '+' : '-'}$${t.amount}</td>
       <td>${t.payment_method}</td>
+      <td>${t.description || '-'}</td>
       <td>
-        ${t.description}
-        <button class="btn btn-danger btn-delete-tx" style="float: right;" data-id="${t.transaction_id}">Delete</button>
+        <button class="btn btn-danger btn-delete-tx" data-id="${t.transaction_id}">Delete</button>
       </td>
     </tr>
   `).join('');
