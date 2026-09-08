@@ -165,7 +165,8 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                 self._send_json(categories)
 
             elif path == "/api/budgets":
-                month = query.get("month", [datetime.now().strftime("%Y-%m")])[0]
+                raw_month = query.get("month", [None])[0]
+                month = datetime.now().strftime("%Y-%m") if (not raw_month or raw_month.upper() == "ALL") else raw_month
                 all_budgets = [b for b in self.service.get_all_budgets() if b.month == month]
                 spent_map = self.service.get_budget_spending_map(month)
                 alerts = self.service.get_budget_alerts(month)
@@ -183,7 +184,7 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                             "current_spent": f"{spent:.2f}",
                             "remaining": f"{remaining:.2f}",
                             "percentage": f"{pct:.1f}",
-                            "status": "EXCEEDED" if spent > b.limit_amount else ("WARNING" if pct >= 90 else "OK"),
+                            "status": "EXCEEDED" if spent > b.limit_amount else ("WARNING" if pct >= Decimal("90.0") else "NORMAL"),
                         }
                     )
 
@@ -203,7 +204,8 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                 self._send_json({"budgets": budgets_payload, "alerts": alerts_payload})
 
             elif path == "/api/export":
-                month = query.get("month", [datetime.now().strftime("%Y-%m")])[0]
+                raw_month = query.get("month", [None])[0]
+                month = datetime.now().strftime("%Y-%m") if (not raw_month or raw_month.upper() == "ALL") else raw_month
                 fmt = query.get("format", ["markdown"])[0]
                 file_path = self.service.export_monthly_statement(month=month, format_type=fmt)
                 content = file_path.read_text(encoding="utf-8")

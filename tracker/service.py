@@ -301,6 +301,8 @@ class FinanceTrackerService:
 
     def get_budget_alerts(self, month: str) -> List[BudgetAlert]:
         """Evaluates all registered budget limits for a month against recorded expenses."""
+        if not month or month.strip().upper() == "ALL":
+            month = datetime.now().strftime("%Y-%m")
         clean_month = validate_month_format(month)
         all_budgets = [b for b in self.get_all_budgets() if b.month == clean_month]
         if not all_budgets:
@@ -321,6 +323,8 @@ class FinanceTrackerService:
 
     def get_budget_spending_map(self, month: str) -> Dict[Tuple[str, str], Decimal]:
         """Returns mapping of (category_lower, month) -> spent Decimal for display in tables."""
+        if not month or month.strip().upper() == "ALL":
+            month = datetime.now().strftime("%Y-%m")
         clean_month = validate_month_format(month)
         summary = self.get_financial_summary(month=clean_month)
         return {
@@ -335,6 +339,8 @@ class FinanceTrackerService:
         format_type: str = "markdown",
     ) -> Path:
         """Exports a formatted monthly financial statement report file."""
+        if not month or month.strip().upper() == "ALL":
+            month = datetime.now().strftime("%Y-%m")
         clean_month = validate_month_format(month)
         summary = self.get_financial_summary(month=clean_month)
         transactions = self.list_transactions(start_date=f"{clean_month}-01")
