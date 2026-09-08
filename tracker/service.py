@@ -222,7 +222,7 @@ class FinanceTrackerService:
         """
         Computes Net Cash Flow, monthly/range aggregations, and category breakdown.
         """
-        if month:
+        if month and month.strip().upper() != "ALL":
             clean_month = validate_month_format(month)
             year, m = map(int, clean_month.split("-"))
             _, last_day = calendar.monthrange(year, m)

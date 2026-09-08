@@ -144,7 +144,7 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                 tx_type = query.get("type", [None])[0]
                 category = query.get("category", [None])[0]
 
-                if month and not start_date:
+                if month and month.upper() != "ALL" and not start_date:
                     start_date = f"{month}-01"
 
                 txs = self.service.list_transactions(
@@ -154,7 +154,7 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                     category=category,
                 )
 
-                if month:
+                if month and month.upper() != "ALL":
                     txs = [t for t in txs if t.timestamp.strftime("%Y-%m") == month]
 
                 self._send_json([t.to_dict() for t in txs])
@@ -281,12 +281,19 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
             elif path == "/api/import-statement":
                 content = payload.get("content", "")
                 result = self.service.import_bank_statement(content)
+
+                latest_m = ""
+                if result.transactions:
+                    latest_tx = max(result.transactions, key=lambda t: t.timestamp)
+                    latest_m = latest_tx.timestamp.strftime("%Y-%m")
+
                 self._send_json(
                     {
                         "imported_count": result.imported_count,
                         "skipped_duplicates": result.skipped_duplicates,
                         "total_income": f"{result.total_income:.2f}",
                         "total_expense": f"{result.total_expense:.2f}",
+                        "latest_month": latest_m,
                     },
                     status=200,
                 )

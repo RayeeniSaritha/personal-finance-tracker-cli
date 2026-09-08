@@ -57,10 +57,21 @@ function showToast(message, type = 'info') {
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
   const monthInput = document.getElementById('selectedMonth');
+  const btnAllTime = document.getElementById('btnAllTime');
+
   if (monthInput) {
     monthInput.value = state.currentMonth;
     monthInput.addEventListener('change', (e) => {
-      state.currentMonth = e.target.value;
+      state.currentMonth = e.target.value || 'ALL';
+      if (btnAllTime) btnAllTime.style.opacity = e.target.value ? '0.7' : '1.0';
+      refreshAll();
+    });
+  }
+
+  if (btnAllTime) {
+    btnAllTime.addEventListener('click', () => {
+      state.currentMonth = 'ALL';
+      if (monthInput) monthInput.value = '';
       refreshAll();
     });
   }
@@ -208,6 +219,23 @@ async function refreshAll() {
     loadBudgets(),
     loadCategories(),
   ]);
+
+  // If selected month has no transactions on load, auto-fallback to latest month with data or ALL
+  if ((!state.transactions || state.transactions.length === 0) && state.currentMonth !== 'ALL') {
+    try {
+      const allTxs = await apiCall('/api/transactions?month=ALL');
+      if (allTxs && allTxs.length > 0) {
+        const latestTx = allTxs.reduce((max, t) => (t.timestamp > max.timestamp ? t : max), allTxs[0]);
+        const latestM = latestTx.timestamp.slice(0, 7);
+        state.currentMonth = latestM;
+        const monthInput = document.getElementById('selectedMonth');
+        if (monthInput) monthInput.value = latestM;
+        await Promise.all([loadSummary(), loadTransactions(), loadBudgets()]);
+      }
+    } catch (e) {
+      // Ignore fallback errors
+    }
+  }
 }
 
 // API Loaders
@@ -552,10 +580,20 @@ async function handleImportStatement(e) {
       body: JSON.stringify({ content }),
     });
 
+    if (res.latest_month) {
+      state.currentMonth = res.latest_month;
+      const monthInput = document.getElementById('selectedMonth');
+      if (monthInput) monthInput.value = res.latest_month;
+    } else if (res.imported_count > 0) {
+      state.currentMonth = 'ALL';
+      const monthInput = document.getElementById('selectedMonth');
+      if (monthInput) monthInput.value = '';
+    }
+
     showToast(`Successfully imported ${res.imported_count} transaction(s)! (Skipped ${res.skipped_duplicates} duplicates)`);
     closeModal('importModal');
     document.getElementById('importForm').reset();
-    refreshAll();
+    await refreshAll();
   } catch (err) {
     // Handled by apiCall
   }
