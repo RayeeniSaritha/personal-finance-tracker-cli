@@ -139,6 +139,23 @@ function setupEventListeners() {
   if (txTypeSelect) {
     txTypeSelect.addEventListener('change', (e) => populateCategoryDropdowns(e.target.value));
   }
+
+  // Delete Button Event Delegation
+  document.addEventListener('click', async (e) => {
+    const target = e.target.closest('.btn-delete-tx');
+    if (target) {
+      const id = target.getAttribute('data-id');
+      if (id && confirm('Are you sure you want to delete this transaction?')) {
+        try {
+          await apiCall(`/api/transactions/${id}`, { method: 'DELETE' });
+          showToast('Transaction deleted successfully!');
+          await refreshAll();
+        } catch (err) {
+          showToast(err.message, 'error');
+        }
+      }
+    }
+  });
 }
 
 // Modal Helpers
@@ -342,7 +359,7 @@ function renderTransactionsTable() {
       <td>${t.payment_method}</td>
       <td>
         ${t.description}
-        <button class="btn btn-danger" style="float: right;" onclick="handleDeleteTx('${t.transaction_id}')">Delete</button>
+        <button class="btn btn-danger btn-delete-tx" style="float: right;" data-id="${t.transaction_id}">Delete</button>
       </td>
     </tr>
   `).join('');

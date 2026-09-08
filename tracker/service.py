@@ -193,10 +193,19 @@ class FinanceTrackerService:
         return sorted(filtered, key=lambda x: x.timestamp)
 
     def delete_transaction(self, transaction_id: str) -> bool:
-        """Deletes a transaction by ID."""
+        """Deletes a transaction by exact ID or ID prefix."""
+        clean_id = str(transaction_id).strip().lower()
+        if not clean_id:
+            raise ValidationError("Transaction ID for deletion cannot be empty.")
+
         transactions = self.storage.load_transactions()
         initial_count = len(transactions)
-        filtered = [t for t in transactions if t.transaction_id != transaction_id]
+
+        filtered = [
+            t for t in transactions
+            if t.transaction_id.strip().lower() != clean_id
+            and not t.transaction_id.strip().lower().startswith(clean_id)
+        ]
 
         if len(filtered) == initial_count:
             raise NotFoundError(f"Transaction with ID '{transaction_id}' not found.")
