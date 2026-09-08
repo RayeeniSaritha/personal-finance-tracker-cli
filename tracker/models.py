@@ -122,7 +122,20 @@ def parse_datetime(val: Union[str, datetime]) -> datetime:
         try:
             dt = datetime.fromisoformat(val_str)
         except ValueError:
-            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+            date_formats = (
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%d %H:%M",
+                "%Y-%m-%d",
+                "%d-%b-%Y",
+                "%d-%B-%Y",
+                "%d/%m/%Y",
+                "%m/%d/%Y",
+                "%d.%m.%Y",
+                "%Y/%m/%d",
+                "%d %b %Y",
+                "%d %B %Y",
+            )
+            for fmt in date_formats:
                 try:
                     dt = datetime.strptime(val_str, fmt)
                     break

@@ -564,14 +564,15 @@ async function handleImportStatement(e) {
 function handleLoadSampleStatement() {
   const textInput = document.getElementById('importText');
   if (textInput) {
-    const today = state.currentMonth;
-    textInput.value = `Date,Description,Amount,Type
-${today}-01,Monthly Salary Employer,4200.00,INCOME
-${today}-02,Walmart Supermarket Groceries,-145.80,EXPENSE
-${today}-03,Uber Transit Ride,-28.50,EXPENSE
-${today}-04,Electric Power Utility,-85.20,EXPENSE
-${today}-05,Freelance Web Development Payout,850.00,INCOME
-${today}-06,Netflix Subscription,-17.99,EXPENSE
-${today}-07,Amazon Online Shopping,-64.30,EXPENSE`;
+    textInput.value = `Account transactions from 5 July 2026 to 8 September 2026
+Date Description Money out Money in Balance
+20-Jul-2026 Google Pay top-up by *4971 €1.00 €1.00
+11-Aug-2026 To EUR Flexible Cash Funds €1.00 €0.00
+11-Aug-2026 From EUR Flexible Cash Funds €1.00 €1.00
+24-Aug-2026 Google Pay top-up by *4971 €150.00 €151.00
+26-Aug-2026 Google Pay top-up by *4971 €300.00 €451.00
+26-Aug-2026 To Rambabu Jampana €407.79 €43.21
+26-Aug-2026 Transfer to LOKESH VARMA JAMPANA €40.00 €3.21
+18-Jul-2026 Payment from SARITHA RAYEENI €1.00`;
   }
 }
