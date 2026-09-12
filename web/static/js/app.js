@@ -5,6 +5,9 @@
 // Global State
 const state = {
   currentMonth: new Date().toISOString().slice(0, 7),
+  currentUser: JSON.parse(localStorage.getItem('tracker_user') || 'null'),
+  pendingAuthEmail: '',
+  pendingAuthProvider: 'EMAIL',
   transactions: [],
   summary: null,
   budgets: [],
@@ -76,8 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Setup Event Listeners
+  // Setup Event Listeners & Profile UI
   setupEventListeners();
+  updateUserProfileUI();
   
   // Initial Data Load
   refreshAll();
@@ -177,6 +181,53 @@ function setupEventListeners() {
   if (txTypeSelect) {
     txTypeSelect.addEventListener('change', (e) => populateCategoryDropdowns(e.target.value));
   }
+
+  // Auth & Profile Modals Toggle
+  const closeAuthBtn = document.getElementById('closeAuthBtn');
+  if (closeAuthBtn) closeAuthBtn.addEventListener('click', () => closeModal('authModal'));
+
+  const closeRegisterBtn = document.getElementById('closeRegisterBtn');
+  if (closeRegisterBtn) closeRegisterBtn.addEventListener('click', () => closeModal('registerModal'));
+
+  const closeProfileBtn = document.getElementById('closeProfileBtn');
+  if (closeProfileBtn) closeProfileBtn.addEventListener('click', () => closeModal('profileModal'));
+
+  const userAvatar = document.getElementById('userAvatar');
+  if (userAvatar) userAvatar.addEventListener('click', openUserProfileModal);
+
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) btnLogout.addEventListener('click', handleLogout);
+
+  // Multi-Provider Login Options
+  const btnGoogleAuth = document.getElementById('btnGoogleAuth');
+  if (btnGoogleAuth) btnGoogleAuth.addEventListener('click', () => handleLoginSuccess('saritha.rayeeni@gmail.com', 'GOOGLE'));
+
+  const btnAppleAuth = document.getElementById('btnAppleAuth');
+  if (btnAppleAuth) btnAppleAuth.addEventListener('click', () => handleLoginSuccess('saritha.rayeeni@apple.com', 'APPLE'));
+
+  const emailLoginForm = document.getElementById('emailLoginForm');
+  if (emailLoginForm) emailLoginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    if (email) handleLoginSuccess(email, 'EMAIL');
+  });
+
+  const linkOpenRegister = document.getElementById('linkOpenRegister');
+  if (linkOpenRegister) linkOpenRegister.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeModal('authModal');
+    openRegistrationWizard('', 'EMAIL');
+  });
+
+  // Multi-Step Registration Wizard Navigation
+  const btnNextStep = document.getElementById('btnNextStep');
+  if (btnNextStep) btnNextStep.addEventListener('click', handleNextWizardStep);
+
+  const btnPrevStep = document.getElementById('btnPrevStep');
+  if (btnPrevStep) btnPrevStep.addEventListener('click', () => switchWizardStep(1));
+
+  const registerForm = document.getElementById('registerForm');
+  if (registerForm) registerForm.addEventListener('submit', handleCompleteRegistration);
 
   // Delete Button Event Delegation
   document.addEventListener('click', async (e) => {
@@ -614,3 +665,179 @@ Date Description Money out Money in Balance
 18-Jul-2026 Payment from SARITHA RAYEENI €1.00`;
   }
 }
+
+// Auth & Profile Helper Functions
+
+function updateUserProfileUI() {
+  const avatarEl = document.getElementById('userAvatar');
+  const greetingEl = document.getElementById('userGreetingName');
+  const roleEl = document.getElementById('userBadgeRole');
+
+  if (!avatarEl || !greetingEl || !roleEl) return;
+
+  if (state.currentUser) {
+    const firstName = state.currentUser.first_name || 'User';
+    const surname = state.currentUser.surname || '';
+    const initials = (firstName[0] || '') + (surname[0] || '');
+    avatarEl.textContent = initials.toUpperCase() || '👤';
+    greetingEl.textContent = `${firstName} ${surname}`.trim();
+    roleEl.textContent = state.currentUser.category || 'Member';
+  } else {
+    avatarEl.textContent = '🔑';
+    greetingEl.textContent = 'Guest User';
+    roleEl.textContent = 'Click to Sign In';
+  }
+}
+
+function openUserProfileModal() {
+  if (!state.currentUser) {
+    openModal('authModal');
+    return;
+  }
+
+  const user = state.currentUser;
+  const fullNameEl = document.getElementById('profFullName');
+  const emailEl = document.getElementById('profEmail');
+  const phoneEl = document.getElementById('profPhone');
+  const dobEl = document.getElementById('profDOB');
+  const catEl = document.getElementById('profCategory');
+  const incomeEl = document.getElementById('profIncome');
+  const providerEl = document.getElementById('profAuthProvider');
+  const createdEl = document.getElementById('profCreatedAt');
+
+  if (fullNameEl) fullNameEl.textContent = `${user.first_name} ${user.surname}`;
+  if (emailEl) emailEl.textContent = user.email || '-';
+  if (phoneEl) phoneEl.textContent = user.phone_number || '-';
+  if (dobEl) dobEl.textContent = user.date_of_birth || '-';
+  if (catEl) catEl.textContent = user.category || '-';
+  if (incomeEl) incomeEl.textContent = `$${parseFloat(user.annual_income || 0).toLocaleString()} / year`;
+  if (providerEl) providerEl.textContent = user.auth_provider || 'EMAIL';
+  if (createdEl) createdEl.textContent = user.created_at ? new Date(user.created_at).toLocaleDateString() : '-';
+
+  openModal('profileModal');
+}
+
+async function handleLoginSuccess(email, provider) {
+  try {
+    const res = await apiCall('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, auth_provider: provider })
+    });
+
+    if (res.is_registered && res.user) {
+      state.currentUser = res.user;
+      localStorage.setItem('tracker_user', JSON.stringify(res.user));
+      updateUserProfileUI();
+      closeModal('authModal');
+      showToast(`Welcome back, ${res.user.first_name}!`);
+    } else {
+      state.pendingAuthEmail = email;
+      state.pendingAuthProvider = provider;
+      closeModal('authModal');
+      openRegistrationWizard(email, provider);
+    }
+  } catch (err) {
+    // API error handled by apiCall toast
+  }
+}
+
+function openRegistrationWizard(email = '', provider = 'EMAIL') {
+  state.pendingAuthEmail = email;
+  state.pendingAuthProvider = provider;
+
+  const emailInput = document.getElementById('regEmail');
+  if (emailInput) {
+    emailInput.value = email;
+  }
+
+  switchWizardStep(1);
+  openModal('registerModal');
+}
+
+function switchWizardStep(stepNumber) {
+  const step1Content = document.getElementById('step1Content');
+  const step2Content = document.getElementById('step2Content');
+  const stepHeader1 = document.getElementById('stepHeader1');
+  const stepHeader2 = document.getElementById('stepHeader2');
+
+  if (stepNumber === 1) {
+    if (step1Content) step1Content.style.display = 'grid';
+    if (step2Content) step2Content.style.display = 'none';
+    if (stepHeader1) {
+      stepHeader1.classList.add('active');
+      stepHeader1.style.color = 'var(--accent-light)';
+    }
+    if (stepHeader2) {
+      stepHeader2.classList.remove('active');
+      stepHeader2.style.color = 'var(--text-muted)';
+    }
+  } else if (stepNumber === 2) {
+    if (step1Content) step1Content.style.display = 'none';
+    if (step2Content) step2Content.style.display = 'grid';
+    if (stepHeader1) {
+      stepHeader1.classList.remove('active');
+      stepHeader1.style.color = 'var(--text-muted)';
+    }
+    if (stepHeader2) {
+      stepHeader2.classList.add('active');
+      stepHeader2.style.color = 'var(--accent-light)';
+    }
+  }
+}
+
+function handleNextWizardStep() {
+  const surname = document.getElementById('regSurname').value.trim();
+  const firstName = document.getElementById('regFirstName').value.trim();
+  const dob = document.getElementById('regDOB').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+
+  if (!surname || !firstName || !dob || !phone || !email) {
+    showToast('Please fill out all required personal details in Step 1.', 'error');
+    return;
+  }
+
+  switchWizardStep(2);
+}
+
+async function handleCompleteRegistration(e) {
+  e.preventDefault();
+
+  const payload = {
+    surname: document.getElementById('regSurname').value.trim(),
+    first_name: document.getElementById('regFirstName').value.trim(),
+    date_of_birth: document.getElementById('regDOB').value.trim(),
+    phone_number: document.getElementById('regPhone').value.trim(),
+    email: document.getElementById('regEmail').value.trim(),
+    category: document.getElementById('regCategory').value,
+    annual_income: document.getElementById('regAnnualIncome').value,
+    auth_provider: state.pendingAuthProvider || 'EMAIL',
+  };
+
+  try {
+    const res = await apiCall('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    if (res.user) {
+      state.currentUser = res.user;
+      localStorage.setItem('tracker_user', JSON.stringify(res.user));
+      updateUserProfileUI();
+      closeModal('registerModal');
+      document.getElementById('registerForm').reset();
+      showToast(`Registration complete! Welcome, ${res.user.first_name}! 🎉`);
+    }
+  } catch (err) {
+    // Handled by apiCall
+  }
+}
+
+function handleLogout() {
+  state.currentUser = null;
+  localStorage.removeItem('tracker_user');
+  updateUserProfileUI();
+  closeModal('profileModal');
+  showToast('You have been logged out successfully.');
+}
+

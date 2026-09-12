@@ -50,6 +50,99 @@ class PaymentMethod(str, Enum):
         )
 
 
+class UserCategory(str, Enum):
+    """Supported target demographics for finance tracking profiles."""
+
+    STUDENT = "Student"
+    BUSINESS_OWNER = "Business Owner"
+    SALARIED_EMPLOYEE = "Monthly Wage Employee"
+    FREELANCER = "Freelancer"
+
+    @classmethod
+    def from_str(cls, value: str) -> "UserCategory":
+        cleaned = value.strip().lower()
+        for member in cls:
+            if member.value.lower() == cleaned or member.name.lower() == cleaned:
+                return member
+        valid_values = ", ".join([m.value for m in cls])
+        raise ValidationError(
+            f"Invalid user category '{value}'. Must be one of: {valid_values}"
+        )
+
+
+@dataclass
+class UserProfile:
+    """Domain model for user accounts and financial profiles."""
+
+    user_id: str
+    email: str
+    surname: str
+    first_name: str
+    date_of_birth: str
+    phone_number: str
+    category: UserCategory
+    annual_income: Decimal
+    auth_provider: str = "EMAIL"
+    created_at: datetime = None
+
+    def __post_init__(self) -> None:
+        if not self.user_id:
+            self.user_id = str(uuid.uuid4())
+        if not self.email or "@" not in self.email:
+            raise ValidationError("Valid email address is required for user registration.")
+        if not self.surname or not self.surname.strip():
+            raise ValidationError("Surname is required.")
+        if not self.first_name or not self.first_name.strip():
+            raise ValidationError("First Name is required.")
+        if not self.date_of_birth or not self.date_of_birth.strip():
+            raise ValidationError("Date of Birth is required.")
+        if not self.phone_number or not self.phone_number.strip():
+            raise ValidationError("Phone Number is required.")
+        
+        if isinstance(self.category, str):
+            self.category = UserCategory.from_str(self.category)
+        self.annual_income = quantize_amount(self.annual_income)
+
+        if self.created_at is None:
+            self.created_at = datetime.now()
+        elif isinstance(self.created_at, str):
+            self.created_at = parse_datetime(self.created_at)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "user_id": self.user_id,
+            "email": self.email,
+            "surname": self.surname,
+            "first_name": self.first_name,
+            "date_of_birth": self.date_of_birth,
+            "phone_number": self.phone_number,
+            "category": self.category.value,
+            "annual_income": f"{self.annual_income:.2f}",
+            "auth_provider": self.auth_provider,
+            "created_at": self.created_at.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "UserProfile":
+        try:
+            return cls(
+                user_id=data.get("user_id", "").strip(),
+                email=data.get("email", "").strip(),
+                surname=data.get("surname", "").strip(),
+                first_name=data.get("first_name", "").strip(),
+                date_of_birth=data.get("date_of_birth", "").strip(),
+                phone_number=data.get("phone_number", "").strip(),
+                category=UserCategory.from_str(data.get("category", "Student")),
+                annual_income=quantize_amount(data.get("annual_income", "0")),
+                auth_provider=data.get("auth_provider", "EMAIL").strip(),
+                created_at=parse_datetime(data.get("created_at")) if data.get("created_at") else datetime.now(),
+            )
+        except Exception as e:
+            if isinstance(e, ValidationError):
+                raise
+            raise ValidationError(f"Failed to parse user profile data: {e}") from e
+
+
 class DefaultCategories:
     """Predefined categories for Incomes and Expenses."""
 
@@ -154,12 +247,14 @@ def parse_datetime(val: Union[str, datetime]) -> datetime:
 
 
 def validate_month_format(month_str: str) -> str:
-    """Validates YYYY-MM month string format."""
+    """Validates YYYY-MM month string format or 'ALL' for lifetime view."""
+    cleaned = str(month_str).strip()
+    if cleaned.upper() == "ALL":
+        return "ALL"
     pattern = r"^\d{4}-(0[1-9]|1[0-2])$"
-    cleaned = month_str.strip()
     if not re.match(pattern, cleaned):
         raise ValidationError(
-            f"Invalid month format '{month_str}'. Must be formatted as YYYY-MM (e.g., '2026-09')."
+            f"Invalid month format '{month_str}'. Must be formatted as YYYY-MM (e.g., '2026-09') or 'ALL'."
         )
     return cleaned
 

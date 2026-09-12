@@ -634,3 +634,73 @@ body {
   .metrics-grid { grid-template-columns: 1fr; }
   .content-grid { grid-template-columns: 1fr; }
 }
+
+/* Auth Buttons & Provider Styles */
+.btn-auth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-google {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+.btn-google:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-apple {
+  background: #000000;
+  color: #ffffff;
+  border-color: #333333;
+}
+.btn-apple:hover {
+  background: #1a1a1a;
+  border-color: #555555;
+}
+
+/* User Profile Badge & Header Avatar */
+.user-profile-badge {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  transition: var(--transition);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.badge-category {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* Multi-Step Wizard Indicator */
+.step-item.active {
+  color: var(--primary-light);
+  border-bottom: 2px solid var(--primary-light);
+}

@@ -328,6 +328,37 @@ Date Description Money out Money in Balance
         self.assertEqual(res.total_income, Decimal("453.00"))
         self.assertEqual(res.total_expense, Decimal("448.79"))
 
+    def test_register_user_and_authentication(self) -> None:
+        user = self.service.register_user(
+            surname="Rayeeni",
+            first_name="Saritha",
+            date_of_birth="1995-05-15",
+            phone_number="+4915123456789",
+            email="saritha.rayeeni@gmail.com",
+            category="Monthly Wage Employee",
+            annual_income="65000.00",
+            auth_provider="GOOGLE",
+        )
+
+        self.assertIsNotNone(user.user_id)
+        self.assertEqual(user.surname, "Rayeeni")
+        self.assertEqual(user.first_name, "Saritha")
+        self.assertEqual(user.email, "saritha.rayeeni@gmail.com")
+        self.assertEqual(user.annual_income, Decimal("65000.00"))
+        self.assertEqual(user.category, "Monthly Wage Employee")
+
+        # Test authenticate_user
+        auth_user, is_reg = self.service.authenticate_user("saritha.rayeeni@gmail.com")
+        self.assertTrue(is_reg)
+        self.assertIsNotNone(auth_user)
+        self.assertEqual(auth_user.user_id, user.user_id)
+
+        # Test non-registered user
+        non_registered, is_reg2 = self.service.authenticate_user("unknown@example.com")
+        self.assertFalse(is_reg2)
+        self.assertIsNone(non_registered)
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -110,7 +110,8 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
         # Route REST API endpoints
         try:
             if path == "/api/summary":
-                month = query.get("month", [None])[0]
+                raw_month = query.get("month", [None])[0]
+                month = None if (raw_month and raw_month.strip().upper() == "ALL") else raw_month
                 start_date = query.get("start_date", [None])[0]
                 end_date = query.get("end_date", [None])[0]
 
@@ -138,13 +139,14 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                 )
 
             elif path == "/api/transactions":
-                month = query.get("month", [None])[0]
+                raw_month = query.get("month", [None])[0]
+                month = None if (raw_month and raw_month.strip().upper() == "ALL") else raw_month
                 start_date = query.get("start_date", [None])[0]
                 end_date = query.get("end_date", [None])[0]
                 tx_type = query.get("type", [None])[0]
                 category = query.get("category", [None])[0]
 
-                if month and month.upper() != "ALL" and not start_date:
+                if month and not start_date:
                     start_date = f"{month}-01"
 
                 txs = self.service.list_transactions(
@@ -154,7 +156,7 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                     category=category,
                 )
 
-                if month and month.upper() != "ALL":
+                if month:
                     txs = [t for t in txs if t.timestamp.strftime("%Y-%m") == month]
 
                 self._send_json([t.to_dict() for t in txs])
@@ -217,6 +219,18 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                         "content": content,
                     }
                 )
+
+            elif path == "/api/auth/me":
+                email = query.get("email", [""])[0]
+                profile = self.service.get_user_profile_by_email(email)
+                if not profile:
+                    self._send_error("User not found or not registered.", status=404)
+                else:
+                    self._send_json({"user": profile.to_dict()})
+
+            elif path == "/api/auth/categories":
+                from tracker.models import UserCategory
+                self._send_json([c.value for c in UserCategory])
 
             else:
                 self._send_error(f"API Endpoint '{path}' not found.", status=404)
@@ -299,6 +313,41 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
                     },
                     status=200,
                 )
+
+            elif path == "/api/auth/login":
+                email = payload.get("email", "")
+                provider = payload.get("provider", "GOOGLE")
+                profile, is_registered = self.service.authenticate_user(email, provider=provider)
+                self._send_json(
+                    {
+                        "is_registered": is_registered,
+                        "user": profile.to_dict() if profile else None,
+                        "email": email,
+                        "provider": provider,
+                    }
+                )
+
+            elif path == "/api/auth/register":
+                email = payload.get("email", "")
+                surname = payload.get("surname", "")
+                first_name = payload.get("first_name", "")
+                date_of_birth = payload.get("date_of_birth", "")
+                phone_number = payload.get("phone_number", "")
+                category = payload.get("category", "")
+                annual_income = payload.get("annual_income", "0")
+                auth_provider = payload.get("auth_provider", "EMAIL")
+
+                profile = self.service.register_user(
+                    email=email,
+                    surname=surname,
+                    first_name=first_name,
+                    date_of_birth=date_of_birth,
+                    phone_number=phone_number,
+                    category=category,
+                    annual_income=annual_income,
+                    auth_provider=auth_provider,
+                )
+                self._send_json({"user": profile.to_dict()}, status=201)
 
             else:
                 self._send_error(f"Endpoint '{path}' not found.", status=404)

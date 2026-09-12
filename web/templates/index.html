@@ -28,6 +28,16 @@
         <button id="openImportBtn" class="btn btn-secondary">📥 Import Statement</button>
         <button id="openExportBtn" class="btn btn-secondary">📄 Export Report</button>
         <button id="openAddTxBtn" class="btn btn-primary">➕ Add Transaction</button>
+        
+        <!-- User Profile Header Card Widget -->
+        <div id="userProfileWidget" class="user-profile-badge" style="display: flex; align-items: center; gap: 8px;">
+          <div id="userAvatar" class="user-avatar" title="View Profile">👤</div>
+          <div class="user-info-text" style="display: flex; flex-direction: column; line-height: 1.2;">
+            <span id="userNameLabel" style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary);">Guest User</span>
+            <span id="userCategoryBadge" class="badge-category" style="font-size: 0.7rem; color: var(--accent-light);">Unregistered</span>
+          </div>
+          <button id="authActionBtn" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.78rem;">Sign In</button>
+        </div>
       </div>
     </div>
   </header>
@@ -280,6 +290,157 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Auth Modal (Multi-Option Sign In: Google, Apple, Email) -->
+  <div id="authModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 440px; text-align: center;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 Sign In to FinanceTracker Pro</h3>
+        <button id="closeAuthBtn" class="modal-close">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 12px;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary);">
+          Choose your preferred login provider to access your personal dashboard:
+        </p>
+
+        <!-- Social OAuth Sign-In Buttons -->
+        <button type="button" id="btnGoogleAuth" class="btn-auth btn-google">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.1 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.3-.8-.4-1.8-.4-2.8s.1-2 .4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.1-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/></svg>
+          Continue with Google
+        </button>
+
+        <button type="button" id="btnAppleAuth" class="btn-auth btn-apple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.35c.67-.82 1.12-1.95.99-3.09-.97.04-2.14.65-2.83 1.46-.62.72-1.16 1.88-1.01 3.01 1.08.08 2.18-.56 2.85-1.38z"/></svg>
+          Continue with Apple
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin: 4px 0;">
+          <hr style="flex: 1; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+          <span style="font-size: 0.75rem; color: var(--text-muted);">OR</span>
+          <hr style="flex: 1; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+        </div>
+
+        <!-- Email Auth Form -->
+        <form id="emailLoginForm" style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+          <div class="form-group">
+            <label for="loginEmail">Email Address</label>
+            <input type="email" id="loginEmail" class="input-field" placeholder="name@example.com" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In with Email</button>
+        </form>
+
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+          Don't have an account? <a href="#" id="linkOpenRegister" style="color: var(--accent-light); font-weight: 600; text-decoration: underline;">Create Account & Register</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Multi-Step Registration Wizard Modal -->
+  <div id="registerModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 class="modal-title">📝 User Profile Registration</h3>
+        <button id="closeRegisterBtn" class="modal-close">&times;</button>
+      </div>
+
+      <!-- Step Indicator Header -->
+      <div class="step-indicator" style="display: flex; justify-content: space-around; margin: 12px 0 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;">
+        <div id="stepHeader1" class="step-item active" style="font-size: 0.85rem; font-weight: 600;">1. Personal Details</div>
+        <div id="stepHeader2" class="step-item" style="font-size: 0.85rem; color: var(--text-muted);">2. Financial Profile</div>
+      </div>
+
+      <form id="registerForm">
+        <!-- Step 1: Personal Details -->
+        <div id="step1Content" class="form-grid">
+          <div class="form-group">
+            <label for="regSurname">Surname (Last Name) *</label>
+            <input type="text" id="regSurname" class="input-field" placeholder="Rayeeni" required>
+          </div>
+
+          <div class="form-group">
+            <label for="regFirstName">First Name *</label>
+            <input type="text" id="regFirstName" class="input-field" placeholder="Saritha" required>
+          </div>
+
+          <div class="form-group">
+            <label for="regDOB">Date of Birth *</label>
+            <input type="date" id="regDOB" class="input-field" required>
+          </div>
+
+          <div class="form-group">
+            <label for="regPhone">Phone Number *</label>
+            <input type="tel" id="regPhone" class="input-field" placeholder="+49 151 23456789" required>
+          </div>
+
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="regEmail">Email Address *</label>
+            <input type="email" id="regEmail" class="input-field" placeholder="saritha@example.com" required>
+          </div>
+
+          <div style="grid-column: span 2; display: flex; justify-content: flex-end; margin-top: 12px;">
+            <button type="button" id="btnNextStep" class="btn btn-primary">Next: Financial Profile ➔</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Financial Profile & Category -->
+        <div id="step2Content" class="form-grid" style="display: none;">
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="regCategory">Which category best describes you? *</label>
+            <select id="regCategory" class="select-field" required>
+              <option value="Student">🎓 Student</option>
+              <option value="Business Owner">💼 Business Owner / Entrepreneur</option>
+              <option value="Monthly Wage Employee">💵 Salaried / Monthly Wage Employee</option>
+              <option value="Freelancer">💻 Freelancer / Independent Professional</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="grid-column: span 2;">
+            <label for="regAnnualIncome">Estimated Annual Income ($ / annum) *</label>
+            <input type="number" id="regAnnualIncome" class="input-field" step="100" min="0" placeholder="45000.00" required>
+          </div>
+
+          <div style="grid-column: span 2; display: flex; justify-content: space-between; margin-top: 16px;">
+            <button type="button" id="btnPrevStep" class="btn btn-secondary">⬅️ Back to Step 1</button>
+            <button type="submit" class="btn btn-primary">Complete Registration 🎉</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Profile View Modal -->
+  <div id="profileModal" class="modal-backdrop">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">👤 User Profile Details</h3>
+        <button id="closeProfileBtn" class="modal-close">&times;</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 16px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px;">
+          <div style="font-size: 2.5rem; background: var(--accent-gradient); border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">👤</div>
+          <div>
+            <h4 id="profFullName" style="font-size: 1.1rem; margin: 0; font-weight: 700;">-</h4>
+            <span id="profCategory" class="badge-category" style="font-size: 0.8rem; color: var(--accent-light);">-</span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.85rem;">
+          <div><strong style="color: var(--text-secondary);">Email:</strong> <div id="profEmail">-</div></div>
+          <div><strong style="color: var(--text-secondary);">Phone:</strong> <div id="profPhone">-</div></div>
+          <div><strong style="color: var(--text-secondary);">Date of Birth:</strong> <div id="profDOB">-</div></div>
+          <div><strong style="color: var(--text-secondary);">Annual Income:</strong> <div id="profIncome" style="color: var(--income-light); font-weight: 600;">-</div></div>
+          <div><strong style="color: var(--text-secondary);">Auth Method:</strong> <div id="profAuthProvider">-</div></div>
+          <div><strong style="color: var(--text-secondary);">Registered On:</strong> <div id="profCreatedAt">-</div></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 16px;">
+          <button id="btnLogout" type="button" class="btn btn-danger">🚪 Logout</button>
+          <button type="button" class="btn btn-secondary" onclick="closeModal('profileModal')">Close</button>
+        </div>
+      </div>
     </div>
   </div>
 

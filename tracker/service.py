@@ -19,6 +19,8 @@ from tracker.models import (
     PaymentMethod,
     Transaction,
     TransactionType,
+    UserCategory,
+    UserProfile,
     parse_datetime,
     quantize_amount,
     validate_month_format,
@@ -378,3 +380,43 @@ class FinanceTrackerService:
             self.storage.save_transactions(updated_list)
 
         return result
+
+    def register_user(
+        self,
+        email: str,
+        surname: str,
+        first_name: str,
+        date_of_birth: str,
+        phone_number: str,
+        category: Union[str, UserCategory],
+        annual_income: Union[str, float, Decimal],
+        auth_provider: str = "EMAIL",
+    ) -> UserProfile:
+        """Registers a new user profile or updates existing registration details."""
+        profile = UserProfile(
+            user_id="",
+            email=email.strip().lower(),
+            surname=surname.strip(),
+            first_name=first_name.strip(),
+            date_of_birth=date_of_birth.strip(),
+            phone_number=phone_number.strip(),
+            category=UserCategory.from_str(category) if isinstance(category, str) else category,
+            annual_income=quantize_amount(annual_income),
+            auth_provider=auth_provider,
+        )
+        self.storage.save_user(profile)
+        return profile
+
+    def get_user_profile_by_email(self, email: str) -> Optional[UserProfile]:
+        """Retrieves a user profile by email."""
+        return self.storage.get_user_by_email(email)
+
+    def authenticate_user(
+        self, email: str, provider: str = "GOOGLE"
+    ) -> Tuple[Optional[UserProfile], bool]:
+        """Authenticates user session. Returns (profile, is_registered)."""
+        clean_email = email.strip().lower() if email else ""
+        profile = self.storage.get_user_by_email(clean_email)
+        if profile:
+            return profile, True
+        return None, False
