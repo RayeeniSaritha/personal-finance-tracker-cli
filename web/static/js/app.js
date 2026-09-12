@@ -604,7 +604,7 @@ async function handleImportStatement(e) {
   e.preventDefault();
   const fileInput = document.getElementById('importFile');
   const textInput = document.getElementById('importText');
-  let content = textInput ? textInput.value.trim() : '';
+  let content = '';
 
   if (fileInput && fileInput.files.length > 0) {
     const file = fileInput.files[0];
@@ -618,6 +618,8 @@ async function handleImportStatement(e) {
     } else {
       content = await file.text();
     }
+  } else if (textInput) {
+    content = textInput.value.trim();
   }
 
   if (!content) {

@@ -147,7 +147,7 @@ class BankStatementImporter:
     @classmethod
     def _parse_unstructured_text(
         cls, lines: List[str], existing_hashes: set
-    ) -> List[Transaction]:
+    ) -> Tuple[List[Transaction], int]:
         """
         Parses unstructured bank statement text (e.g., Revolut, Wise, N26 PDF exports).
         Supports line stitching for PDF multi-line text streams and auto-direction classifier.
@@ -176,6 +176,7 @@ class BankStatementImporter:
             stitched_lines.append(" ".join(current_block))
 
         parsed_txs: List[Transaction] = []
+        skipped_count = 0
 
         for line_str in stitched_lines:
             date_match = date_pattern.search(line_str)
@@ -258,6 +259,7 @@ class BankStatementImporter:
                     description.lower().strip(),
                 )
                 if dedup_key in existing_hashes:
+                    skipped_count += 1
                     continue
 
                 existing_hashes.add(dedup_key)
@@ -275,7 +277,7 @@ class BankStatementImporter:
             except Exception:
                 continue
 
-        return parsed_txs
+        return parsed_txs, skipped_count
 
     @classmethod
     def parse_statement_content(
@@ -466,7 +468,8 @@ class BankStatementImporter:
 
         # If CSV parsing produced no records and skipped no duplicates, fallback to unstructured text statement parser
         if not imported_txs and skipped_count == 0:
-            imported_txs = cls._parse_unstructured_text(lines, existing_hashes)
+            imported_txs, unstruct_skipped = cls._parse_unstructured_text(lines, existing_hashes)
+            skipped_count += unstruct_skipped
             for tx in imported_txs:
                 if tx.type == TransactionType.INCOME:
                     total_income += tx.amount
