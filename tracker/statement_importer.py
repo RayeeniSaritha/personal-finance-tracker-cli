@@ -293,8 +293,8 @@ class BankStatementImporter:
 
         # Unpack PDF binary or Base64 data URI if present
         if (
-            content.startswith("%PDF-")
-            or "data:application/pdf;base64," in content
+            "base64," in content
+            or content.startswith("%PDF-")
             or content.startswith("JVBERi0")
         ):
             import base64

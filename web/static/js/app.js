@@ -618,7 +618,10 @@ async function handleImportStatement(e) {
 
   if (fileInput && fileInput.files.length > 0) {
     const file = fileInput.files[0];
-    if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+    const fileName = file.name.toLowerCase();
+    const isBinary = fileName.endsWith('.pdf') || file.type.includes('pdf') || fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || file.type.startsWith('image/') || !file.type.startsWith('text/');
+
+    if (isBinary) {
       content = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
