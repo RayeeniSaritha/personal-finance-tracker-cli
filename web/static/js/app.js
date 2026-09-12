@@ -549,16 +549,31 @@ async function handleAddTransaction(e) {
     timestamp: timestamp,
   };
 
+  const amountVal = parseFloat(payload.amount);
+  if (isNaN(amountVal) || amountVal <= 0) {
+    showToast('Please enter a valid positive numeric amount (e.g. 150.00).', 'error');
+    return;
+  }
+
   try {
     const res = await apiCall('/api/transactions', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
 
+    if (res.transaction && res.transaction.timestamp) {
+      const txMonth = res.transaction.timestamp.slice(0, 7);
+      if (state.currentMonth !== 'ALL') {
+        state.currentMonth = txMonth;
+        const monthInput = document.getElementById('selectedMonth');
+        if (monthInput) monthInput.value = txMonth;
+      }
+    }
+
     showToast('Transaction recorded successfully!');
     closeModal('txModal');
     document.getElementById('txForm').reset();
-    refreshAll();
+    await refreshAll();
   } catch (err) {
     // Handled by apiCall
   }
