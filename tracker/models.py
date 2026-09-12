@@ -62,7 +62,7 @@ class UserCategory(str, Enum):
     def from_str(cls, value: str) -> "UserCategory":
         cleaned = value.strip().lower()
         for member in cls:
-            if member.value.lower() == cleaned or member.name.lower() == cleaned:
+            if member.value.lower() in cleaned or cleaned in member.value.lower() or member.name.lower() in cleaned:
                 return member
         valid_values = ", ".join([m.value for m in cls])
         raise ValidationError(

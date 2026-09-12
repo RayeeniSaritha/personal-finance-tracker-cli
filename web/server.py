@@ -316,7 +316,7 @@ class FinanceTrackerRequestHandler(BaseHTTPRequestHandler):
 
             elif path == "/api/auth/login":
                 email = payload.get("email", "")
-                provider = payload.get("provider", "GOOGLE")
+                provider = payload.get("provider") or payload.get("auth_provider") or "GOOGLE"
                 profile, is_registered = self.service.authenticate_user(email, provider=provider)
                 self._send_json(
                     {
