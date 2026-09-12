@@ -78,8 +78,9 @@ class PDFTextExtractor:
                     else:
                         clean = clean_b.decode("latin1", errors="ignore").replace("\x00", "").strip()
 
-                    # Clean CID prefix artifacts
+                    # Clean CID prefix artifacts & control characters
                     clean = re.sub(r"x[D-F]\s*", "", clean)
+                    clean = re.sub(r"[\x00-\x1f\x7f-\x9f]+", " ", clean).strip()
                     if clean:
                         extracted.append(clean)
 

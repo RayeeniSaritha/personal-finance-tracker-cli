@@ -122,6 +122,16 @@ function setupEventListeners() {
   const loadSampleBtn = document.getElementById('loadSampleBtn');
   if (loadSampleBtn) loadSampleBtn.addEventListener('click', handleLoadSampleStatement);
 
+  const importFileInput = document.getElementById('importFile');
+  if (importFileInput) {
+    importFileInput.addEventListener('change', () => {
+      const textInput = document.getElementById('importText');
+      if (textInput && importFileInput.files.length > 0) {
+        textInput.value = '';
+      }
+    });
+  }
+
   // Import Format Selector Tabs
   const importTabs = document.querySelectorAll('.import-tab');
   importTabs.forEach(tab => {
